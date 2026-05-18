@@ -507,6 +507,23 @@ pre.ticket-code::before {
   .match-container { flex-direction: column; }
   .summary-score { font-size: 52px; }
   .ticket-preview-body { padding: 20px; }
+
+  /* Mobile question screen */
+  .screen { padding: 16px 14px; }
+  .question-card { padding: 20px 16px; }
+  .question-text { font-size: 15px; }
+  .option-btn { font-size: 14px; padding: 12px 14px; }
+  .action-row { gap: 8px; }
+  .btn { font-size: 13px; padding: 10px 16px; }
+  .btn-sm { padding: 8px 12px; font-size: 12px; }
+  .top-nav { margin-bottom: 16px; }
+  .q-score-badge { font-size: 12px; padding: 5px 10px; }
+  .match-formula, .match-label { font-size: 13px; padding: 10px 12px; }
+  pre.ticket-code { font-size: 11.5px; padding: 12px; }
+  .side-panel-content { max-height: 50vh; }
+  h1.hero { font-size: 26px; }
+  .card { padding: 20px 16px; }
+  .summary-score { font-size: 48px; }
 }
 </style>
 </head>
@@ -516,22 +533,30 @@ pre.ticket-code::before {
 
 <!-- ══ SCREEN: WELCOME ══ -->
 <div id="screen-welcome" class="screen active">
-  <br><br>
+  <br>
   <div class="logo">Экзамен<span>АИ</span></div>
   <h1 class="hero">Подготовка<br>к госэкзамену</h1>
   <p class="subtitle">Интеллектуальный тренажёр на основе Mistral AI<br>Понимание важнее зубрёжки</p>
 
-  <!-- API Key -->
-  <div class="card" style="max-width:500px;">
-    <h2 class="section-title" style="font-size:14px;">🔑 Mistral API ключ</h2>
-    <div style="display:flex;gap:10px;">
-      <input type="password" id="api-key-input" class="api-input" placeholder="Введите ключ...">
-      <button class="btn btn-primary" onclick="saveApiKey()">Сохранить</button>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;max-width:620px;margin-bottom:36px;">
+    <div class="card" style="margin:0;padding:20px;">
+      <div style="font-size:28px;margin-bottom:10px;">🎯</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:600;margin-bottom:6px;">Умные вопросы</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;">AI генерирует вопросы по билету — проверяет понимание, а не зубрёжку</div>
     </div>
-    <p id="api-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
+    <div class="card" style="margin:0;padding:20px;">
+      <div style="font-size:28px;margin-bottom:10px;">📐</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:600;margin-bottom:6px;">Работа с формулами</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;">Выбор верной формулы, сопоставление, открытые вопросы с проверкой</div>
+    </div>
+    <div class="card" style="margin:0;padding:20px;">
+      <div style="font-size:28px;margin-bottom:10px;">💡</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:600;margin-bottom:6px;">Подсказки и анализ</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;">Трёхуровневые подсказки, итоговый разбор слабых мест после теста</div>
+    </div>
   </div>
 
-  <button class="btn btn-primary" style="font-size:16px;padding:16px 40px;" onclick="goToTickets()">
+  <button class="btn btn-primary" style="font-size:16px;padding:16px 48px;" onclick="goToTickets()">
     Начать подготовку →
   </button>
 </div>
@@ -708,7 +733,7 @@ pre.ticket-code::before {
 <script>
 // ══ STATE ══════════════════════════════════════════════════════
 const state = {
-  apiKey: localStorage.getItem('mistral_key') || '',
+  apiKey: '',  // set server-side via env var
   tickets: [],
   selectedTickets: [],  // filenames
   ticketMode: 'all',    // 'all' | 'one'
@@ -751,19 +776,7 @@ function showToast(msg, duration = 4000) {
 }
 
 // ══ WELCOME ═══════════════════════════════════════════════════
-function saveApiKey() {
-  const v = document.getElementById('api-key-input').value.trim();
-  if (!v) return;
-  state.apiKey = v;
-  localStorage.setItem('mistral_key', v);
-  document.getElementById('api-status').textContent = '✓ Ключ сохранён';
-}
-
 async function goToTickets() {
-  if (!state.apiKey) {
-    const saved = localStorage.getItem('mistral_key');
-    if (saved) state.apiKey = saved;
-  }
   showScreen('screen-tickets');
   await loadTickets();
 }
@@ -1033,6 +1046,7 @@ async function loadNextQuestion() {
 // If model forgot to wrap LaTeX in $...$ — wrap it automatically
 function fixLatex(text) {
   if (!text) return text;
+  if (typeof text !== 'string') return text;
 
   // Already has $$ blocks — leave those alone, only fix inline gaps
   // Step 1: protect existing $$...$$ and $...$ by replacing with placeholders
@@ -1327,15 +1341,7 @@ function confirmExit() {
   showScreen('screen-tickets');
 }
 
-// Init
-(function init() {
-  const saved = localStorage.getItem('mistral_key');
-  if (saved) {
-    state.apiKey = saved;
-    document.getElementById('api-key-input').value = saved;
-    document.getElementById('api-status').textContent = '✓ Ключ загружен из памяти';
-  }
-})();
+// Init — API key is set server-side via MISTRAL_API_KEY env var
 </script>
 </body>
 </html>
