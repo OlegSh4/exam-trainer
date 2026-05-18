@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ЭкзаменАИ — Подготовка к госэкзамену</title>
+
+<!-- MathJax for LaTeX rendering -->
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;800&family=Golos+Text:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #0d0f14;
+  --surface: #151821;
+  --surface2: #1c2130;
+  --border: #252d3f;
+  --accent: #4f8ef7;
+  --accent2: #7c3aed;
+  --green: #22d3a0;
+  --red: #f75555;
+  --yellow: #f7c355;
+  --text: #e8eaf0;
+  --muted: #6b7494;
+  --radius: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Golos Text', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background grid */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(79,142,247,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,142,247,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; padding: 24px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+
+/* ── HEADER ── */
+.logo {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: .3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.logo span { color: var(--accent); }
+
+h1.hero {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  background: linear-gradient(135deg, #fff 30%, var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+h2.section-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 20px;
+}
+.subtitle { color: var(--muted); font-size: 15px; text-align: center; margin-bottom: 48px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%; max-width: 700px;
+  margin-bottom: 16px;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--accent); }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Golos Text', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none; cursor: pointer;
+  transition: all .2s; letter-spacing: .02em;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #3a7de8; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,142,247,.4); }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-green { background: var(--green); color: #000; }
+.btn-dontknow { background: var(--surface2); color: var(--red); border: 1px solid rgba(247,85,85,.4); }
+.btn-dontknow:hover { background: rgba(247,85,85,.1); border-color: var(--red); }
+.btn-green:hover { filter: brightness(1.1); }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn-icon { width: 38px; height: 38px; padding: 0; display:flex; align-items:center; justify-content:center; font-size:18px; }
+
+/* ── TICKET LIST ── */
+.ticket-list { width: 100%; max-width: 700px; }
+.ticket-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.ticket-item:hover { border-color: var(--accent); background: var(--surface2); }
+.ticket-item.selected { border-color: var(--accent); background: rgba(79,142,247,.08); }
+.ticket-item-name { font-size: 14px; font-weight: 500; flex: 1; }
+.ticket-file { font-size: 11px; color: var(--muted); font-family: monospace; }
+
+/* ── MODE SELECTOR ── */
+.mode-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; width: 100%; max-width: 700px; margin-bottom: 24px;
+}
+.mode-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.mode-card:hover, .mode-card.selected {
+  border-color: var(--accent);
+  background: rgba(79,142,247,.08);
+}
+.mode-card .mode-icon { font-size: 28px; margin-bottom: 8px; }
+.mode-card .mode-name { font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.mode-card .mode-desc { font-size: 12px; color: var(--muted); }
+
+/* ── QUESTION AREA ── */
+.question-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; max-width: 800px; margin-bottom: 16px;
+}
+.q-progress {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px; color: var(--muted);
+}
+.q-score-badge {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px; font-weight: 600;
+}
+.progress-bar {
+  width: 100%; max-width: 800px;
+  height: 3px; background: var(--border);
+  border-radius: 2px; margin-bottom: 24px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px; transition: width .4s ease;
+}
+
+.question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  width: 100%; max-width: 800px;
+  margin-bottom: 16px;
+}
+.q-type-badge {
+  display: inline-block;
+  font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  padding: 4px 10px; border-radius: 4px;
+  margin-bottom: 16px; text-transform: uppercase;
+}
+.q-type-open { background: rgba(79,142,247,.15); color: var(--accent); }
+.q-type-choice { background: rgba(124,58,237,.15); color: #a78bfa; }
+.q-type-formula_choice { background: rgba(247,195,85,.15); color: var(--yellow); }
+.q-type-formula_match { background: rgba(34,211,160,.15); color: var(--green); }
+
+.question-text {
+  font-size: 17px; line-height: 1.65;
+  margin-bottom: 24px;
+}
+
+/* Options */
+.options-list { display: flex; flex-direction: column; gap: 10px; }
+.option-btn {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 15px; font-family: 'Golos Text', sans-serif; color: var(--text);
+  transition: all .15s;
+  line-height: 1.5;
+}
+.option-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(79,142,247,.08); }
+.option-btn.selected { border-color: var(--accent); background: rgba(79,142,247,.12); }
+.option-btn.correct { border-color: var(--green) !important; background: rgba(34,211,160,.1) !important; }
+.option-btn.wrong { border-color: var(--red) !important; background: rgba(247,85,85,.1) !important; }
+
+/* Open answer textarea */
+.answer-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: 'Golos Text', sans-serif;
+  font-size: 15px; color: var(--text);
+  resize: vertical; min-height: 100px;
+  transition: border-color .2s;
+  outline: none;
+}
+.answer-textarea:focus { border-color: var(--accent); }
+
+/* Match question */
+.match-container { display: flex; gap: 16px; flex-wrap: wrap; }
+.match-col { flex: 1; min-width: 200px; }
+.match-col-title { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.match-formula {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+}
+.match-formula:hover { border-color: var(--accent); }
+.match-formula.selected { border-color: var(--accent2); background: rgba(124,58,237,.1); }
+.match-formula.matched { border-color: var(--green); background: rgba(34,211,160,.08); }
+.match-formula.wrong { border-color: var(--red); }
+.match-label {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.match-label:hover { border-color: var(--accent); }
+.match-label.selected { border-color: var(--accent2); background: rgba(124,58,237,.1); }
+
+/* Feedback */
+.feedback-box {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 16px;
+  font-size: 14px; line-height: 1.6;
+  border: 1px solid;
+}
+.feedback-correct { background: rgba(34,211,160,.08); border-color: var(--green); }
+.feedback-partial { background: rgba(247,195,85,.08); border-color: var(--yellow); }
+.feedback-wrong { background: rgba(247,85,85,.08); border-color: var(--red); }
+.feedback-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: .08em;
+  margin-bottom: 8px; text-transform: uppercase;
+}
+
+/* Hint box */
+.hint-box {
+  background: rgba(79,142,247,.06);
+  border: 1px solid rgba(79,142,247,.25);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  font-size: 14px;
+  display: none;
+}
+.hint-box.visible { display: block; }
+
+/* Action row */
+.action-row {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; margin-top: 20px;
+}
+
+/* ── SUMMARY SCREEN ── */
+.summary-score {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 72px; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center; line-height: 1;
+}
+.grade-badge {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 20px; font-weight: 600;
+  padding: 8px 24px; border-radius: 40px;
+  margin: 12px auto;
+  display: inline-block;
+}
+.areas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.area-card { border-radius: 10px; padding: 16px; }
+.area-strong { background: rgba(34,211,160,.08); border: 1px solid rgba(34,211,160,.3); }
+.area-weak { background: rgba(247,85,85,.08); border: 1px solid rgba(247,85,85,.3); }
+.area-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.area-strong .area-title { color: var(--green); }
+.area-weak .area-title { color: var(--red); }
+.area-item { font-size: 13px; margin-bottom: 4px; display: flex; gap: 6px; align-items: flex-start; }
+
+/* Loading spinner */
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 32px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text { text-align: center; color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+/* API key setup */
+.api-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Golos Text', sans-serif;
+  font-size: 14px; color: var(--text);
+  outline: none; transition: border-color .2s;
+}
+.api-input:focus { border-color: var(--accent); }
+
+.tag { display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:3px 10px; border-radius:4px; }
+
+/* Nav top */
+.top-nav {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; max-width: 800px;
+  margin-bottom: 32px;
+}
+.back-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .2s;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Error toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #1a1a2e; border: 1px solid var(--red);
+  color: var(--text); border-radius: 10px;
+  padding: 14px 20px; font-size: 14px; max-width: 360px;
+  z-index: 1000; display: none;
+  animation: slideIn .3s ease;
+}
+@keyframes slideIn { from { transform: translateX(100px); opacity:0; } }
+.toast.visible { display: block; }
+
+/* ── TICKET PREVIEW SCREEN ── */
+.ticket-preview-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  width: 100%; max-width: 800px;
+  font-size: 15px; line-height: 1.8;
+  max-height: 60vh; overflow-y: auto;
+}
+.ticket-preview-body h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: var(--accent);
+  margin: 24px 0 10px;
+  letter-spacing: .04em;
+}
+.ticket-preview-body p { margin-bottom: 10px; }
+
+/* Code blocks inside ticket preview and side panel */
+pre.ticket-code {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+  color: #c9d1d9;
+  margin: 10px 0 14px;
+  position: relative;
+}
+pre.ticket-code::before {
+  content: attr(data-lang);
+  position: absolute; top: 6px; right: 10px;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: .06em; text-transform: uppercase;
+  font-family: 'Golos Text', sans-serif;
+}
+.ticket-preview-body ul, .side-panel-content ul {
+  padding-left: 18px; margin-bottom: 10px;
+}
+.ticket-preview-body li, .side-panel-content li {
+  margin-bottom: 4px; font-size: 14px;
+}
+
+/* ── QUESTION LAYOUT WITH SIDE PANEL ── */
+#screen-question .screen-inner {
+  display: flex; gap: 20px;
+  width: 100%; max-width: 1100px;
+  align-items: flex-start;
+}
+#screen-question .main-col {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center;
+}
+/* Side panel */
+.side-panel {
+  width: 320px; flex-shrink: 0;
+  position: sticky; top: 24px;
+}
+.side-panel-toggle {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; font-size: 13px; font-family: 'Golos Text', sans-serif;
+  color: var(--text); transition: all .2s;
+}
+.side-panel-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.side-panel-toggle .arrow { transition: transform .2s; font-size: 10px; }
+.side-panel-toggle.open .arrow { transform: rotate(180deg); }
+.side-panel-content {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  border-top: none;
+  padding: 20px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  font-size: 13px; line-height: 1.7;
+}
+.side-panel-content.open { display: block; }
+.side-panel-content h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 11px; font-weight: 600;
+  color: var(--accent); letter-spacing: .06em;
+  margin: 16px 0 6px; text-transform: uppercase;
+}
+.side-panel-content h2:first-child { margin-top: 0; }
+
+@media (max-width: 900px) {
+  #screen-question .screen-inner { flex-direction: column; }
+  .side-panel { width: 100%; position: static; }
+}
+
+@media (max-width: 600px) {
+  .mode-grid { grid-template-columns: 1fr; }
+  .areas-grid { grid-template-columns: 1fr; }
+  .match-container { flex-direction: column; }
+  .summary-score { font-size: 52px; }
+  .ticket-preview-body { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ══ SCREEN: WELCOME ══ -->
+<div id="screen-welcome" class="screen active">
+  <br><br>
+  <div class="logo">Экзамен<span>АИ</span></div>
+  <h1 class="hero">Подготовка<br>к госэкзамену</h1>
+  <p class="subtitle">Интеллектуальный тренажёр на основе Mistral AI<br>Понимание важнее зубрёжки</p>
+
+  <!-- API Key -->
+  <div class="card" style="max-width:500px;">
+    <h2 class="section-title" style="font-size:14px;">🔑 Mistral API ключ</h2>
+    <div style="display:flex;gap:10px;">
+      <input type="password" id="api-key-input" class="api-input" placeholder="Введите ключ...">
+      <button class="btn btn-primary" onclick="saveApiKey()">Сохранить</button>
+    </div>
+    <p id="api-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
+  </div>
+
+  <button class="btn btn-primary" style="font-size:16px;padding:16px 40px;" onclick="goToTickets()">
+    Начать подготовку →
+  </button>
+</div>
+
+<!-- ══ SCREEN: SELECT TICKETS ══ -->
+<div id="screen-tickets" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="showScreen('screen-welcome')">← Назад</button>
+    <span style="font-family:'Unbounded',sans-serif;font-size:13px;color:var(--muted);">ВЫБОР БИЛЕТОВ</span>
+  </div>
+
+  <h2 class="section-title">Какие билеты изучаем?</h2>
+
+  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+    <button class="btn btn-primary" id="btn-all" onclick="selectMode('all')">🎲 Все в перемешку</button>
+    <button class="btn btn-secondary" id="btn-one" onclick="selectMode('one')">📋 Конкретный билет</button>
+  </div>
+
+  <div id="ticket-list-container" class="ticket-list" style="display:none;">
+    <div id="ticket-list"></div>
+  </div>
+
+  <div style="width:100%;max-width:700px;margin-top:24px;">
+    <h2 class="section-title" style="font-size:14px;margin-bottom:12px;">Режим вопросов</h2>
+    <div class="mode-grid">
+      <div class="mode-card selected" data-mode="mixed" onclick="selectQMode(this)">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name">Все типы</div>
+        <div class="mode-desc">Случайный микс</div>
+      </div>
+      <div class="mode-card" data-mode="open" onclick="selectQMode(this)">
+        <div class="mode-icon">✍️</div>
+        <div class="mode-name">Открытые</div>
+        <div class="mode-desc">Свободный ответ</div>
+      </div>
+      <div class="mode-card" data-mode="choice" onclick="selectQMode(this)">
+        <div class="mode-icon">☑️</div>
+        <div class="mode-name">С вариантами</div>
+        <div class="mode-desc">A / B / C / D</div>
+      </div>
+      <div class="mode-card" data-mode="formula_choice" onclick="selectQMode(this)">
+        <div class="mode-icon">∫</div>
+        <div class="mode-name">Формулы</div>
+        <div class="mode-desc">Выбрать верную</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <span style="font-size:14px;color:var(--muted);">Вопросов до итогов:</span>
+      <input type="range" id="q-count" min="5" max="30" step="5" value="15" style="flex:1;" oninput="document.getElementById('q-count-val').textContent=this.value">
+      <span id="q-count-val" style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--accent);min-width:28px;">15</span>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;padding:16px;font-size:16px;" onclick="startSession()">
+      Начать сессию →
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: QUESTION ══ -->
+<!-- ══ SCREEN: TICKET PREVIEW ══ -->
+<div id="screen-preview" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="showScreen('screen-tickets')">← Назад</button>
+    <span style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);">ИЗУЧИ БИЛЕТ</span>
+  </div>
+
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">Перед тестом</div>
+    <h2 id="preview-title" style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:700;"></h2>
+  </div>
+
+  <div class="ticket-preview-body" id="preview-body"></div>
+
+  <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn btn-primary" style="padding:14px 36px;font-size:15px;" onclick="proceedToTest()">
+      Я готов — начать тест →
+    </button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-tickets')">← Выбрать другой</button>
+  </div>
+</div>
+
+<div id="screen-question" class="screen">
+  <div class="top-nav" style="max-width:1100px;">
+    <button class="back-btn" onclick="confirmExit()">← Выйти</button>
+    <span id="session-ticket-label" style="font-size:12px;color:var(--muted);"></span>
+  </div>
+
+  <div class="screen-inner">
+    <!-- Main column -->
+    <div class="main-col">
+      <div class="question-header" style="width:100%;max-width:800px;">
+        <span class="q-progress" id="q-progress">Вопрос 1/15</span>
+        <span class="q-score-badge">Счёт: <span id="session-score">0</span>/<span id="session-total">0</span></span>
+      </div>
+      <div class="progress-bar" style="max-width:800px;"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+      <div class="question-card" id="question-card" style="max-width:800px;">
+        <div class="spinner"></div>
+        <div class="loading-text">Генерирую вопрос...</div>
+      </div>
+
+      <div class="hint-box" id="hint-box" style="max-width:800px;">
+        💡 <span id="hint-text"></span>
+      </div>
+
+      <div class="action-row" id="action-row" style="display:none;max-width:800px;">
+        <button class="btn btn-secondary btn-sm" onclick="requestHint()" id="btn-hint">
+          💡 Подсказка
+        </button>
+        <button class="btn btn-dontknow btn-sm" onclick="dontKnow()" id="btn-dontknow">
+          🏳 Не знаю
+        </button>
+        <button class="btn btn-primary" onclick="submitAnswer()" id="btn-submit" style="display:none;">
+          Проверить ответ
+        </button>
+        <button class="btn btn-green" onclick="nextQuestion()" id="btn-next" style="display:none;">
+          Следующий →
+        </button>
+      </div>
+    </div>
+
+    <!-- Side panel: ticket reference -->
+    <div class="side-panel" id="side-panel">
+      <button class="side-panel-toggle" onclick="toggleSidePanel(this)">
+        <span>📄 Показать билет</span>
+        <span class="arrow">▼</span>
+      </button>
+      <div class="side-panel-content" id="side-panel-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: SUMMARY ══ -->
+<div id="screen-summary" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="showScreen('screen-tickets')">← К билетам</button>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <div style="font-size:12px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;">Итоги сессии</div>
+    <div class="summary-score" id="summary-score">—</div>
+    <div class="grade-badge" id="summary-grade">...</div>
+    <p id="summary-text" style="color:var(--muted);font-size:14px;margin-top:12px;"></p>
+  </div>
+
+  <div class="card" style="max-width:700px;">
+    <div class="areas-grid">
+      <div class="area-card area-strong">
+        <div class="area-title">✓ Сильные стороны</div>
+        <div id="strong-areas"></div>
+      </div>
+      <div class="area-card area-weak">
+        <div class="area-title">⚠ Нужно подтянуть</div>
+        <div id="weak-areas"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-top:8px;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">📚 Рекомендация</div>
+      <p id="recommendation" style="font-size:14px;line-height:1.6;"></p>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:8px;">
+    <button class="btn btn-primary" onclick="startSession()">🔄 Повторить</button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-tickets')">← К выбору</button>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══════════════════════════════════════════════════════
+const state = {
+  apiKey: localStorage.getItem('mistral_key') || '',
+  tickets: [],
+  selectedTickets: [],  // filenames
+  ticketMode: 'all',    // 'all' | 'one'
+  qMode: 'mixed',
+  qCount: 15,
+  session: {
+    queue: [],          // ticket filenames to cycle
+    history: [],        // answered questions
+    currentQ: null,
+    hintAttempt: 0,
+    answered: false,
+    score: 0,
+    total: 0,
+  }
+};
+
+// ══ API ═══════════════════════════════════════════════════════
+async function api(path, body = null) {
+  const opts = { headers: { 'Content-Type': 'application/json', 'X-Mistral-Key': state.apiKey } };
+  if (body) { opts.method = 'POST'; opts.body = JSON.stringify(body); }
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || r.statusText);
+  }
+  return r.json();
+}
+
+// ══ NAVIGATION ════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showToast(msg, duration = 4000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), duration);
+}
+
+// ══ WELCOME ═══════════════════════════════════════════════════
+function saveApiKey() {
+  const v = document.getElementById('api-key-input').value.trim();
+  if (!v) return;
+  state.apiKey = v;
+  localStorage.setItem('mistral_key', v);
+  document.getElementById('api-status').textContent = '✓ Ключ сохранён';
+}
+
+async function goToTickets() {
+  if (!state.apiKey) {
+    const saved = localStorage.getItem('mistral_key');
+    if (saved) state.apiKey = saved;
+  }
+  showScreen('screen-tickets');
+  await loadTickets();
+}
+
+// ══ TICKET SELECTION ══════════════════════════════════════════
+async function loadTickets() {
+  try {
+    state.tickets = await api('/api/tickets');
+    renderTicketList();
+  } catch(e) { showToast('Ошибка загрузки билетов: ' + e.message); }
+}
+
+function renderTicketList() {
+  const list = document.getElementById('ticket-list');
+  list.innerHTML = state.tickets.map(t => `
+    <div class="ticket-item" onclick="toggleTicket('${t.filename}', this)" data-file="${t.filename}">
+      <span class="ticket-item-name">${t.title}</span>
+      <span class="ticket-file">${t.filename}</span>
+    </div>
+  `).join('');
+}
+
+function toggleTicket(filename, el) {
+  const idx = state.selectedTickets.indexOf(filename);
+  if (idx >= 0) { state.selectedTickets.splice(idx, 1); el.classList.remove('selected'); }
+  else { state.selectedTickets.push(filename); el.classList.add('selected'); }
+}
+
+function selectMode(mode) {
+  state.ticketMode = mode;
+  document.getElementById('btn-all').className = mode === 'all' ? 'btn btn-primary' : 'btn btn-secondary';
+  document.getElementById('btn-one').className = mode === 'one' ? 'btn btn-primary' : 'btn btn-secondary';
+  document.getElementById('ticket-list-container').style.display = mode === 'one' ? 'block' : 'none';
+}
+
+function selectQMode(el) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.qMode = el.dataset.mode;
+}
+
+// Convert ticket plain text to readable HTML for preview/side panel
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function ticketTextToHtml(text) {
+  // Step 1: extract all code blocks with a placeholder so they survive line parsing
+  const codeBlocks = [];
+  const withPlaceholders = text.replace(/```([\w]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang: lang.trim() || 'python', code: code.replace(/\n$/, '') });
+    return `\x00CODE${idx}\x00`;
+  });
+
+  // Step 2: process line by line
+  const lines = withPlaceholders.split('\n');
+  let html = '';
+  let inList = false;
+
+  const flushList = () => { if (inList) { html += '</ul>'; inList = false; } };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+
+    // Code block placeholder
+    const codeMatch = line.match(/^\x00CODE(\d+)\x00$/);
+    if (codeMatch) {
+      flushList();
+      const { lang, code } = codeBlocks[parseInt(codeMatch[1])];
+      html += `<pre class="ticket-code" data-lang="${escapeHtml(lang)}">${escapeHtml(code)}</pre>`;
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('## ')) {
+      flushList();
+      html += `<h2>${line.slice(3)}</h2>`;
+    } else if (line.startsWith('# ')) {
+      flushList();
+      html += `<h2>${line.slice(2)}</h2>`;
+    // Bullet lists
+    } else if (/^[-*•] /.test(line)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += `<li>${line.replace(/^[-*•] +/, '')}</li>`;
+    // Blank line
+    } else if (line.trim() === '') {
+      flushList();
+    // Normal text
+    } else {
+      flushList();
+      html += `<p>${line}</p>`;
+    }
+  }
+  flushList();
+  return html;
+}
+
+async function startSession() {
+  let tickets;
+  if (state.ticketMode === 'all') {
+    tickets = state.tickets.map(t => t.filename);
+  } else {
+    tickets = state.selectedTickets;
+    if (!tickets.length) { showToast('Выберите хотя бы один билет'); return; }
+  }
+  if (!tickets.length) { showToast('Билеты не найдены'); return; }
+
+  state.qCount = parseInt(document.getElementById('q-count').value);
+  state.session = {
+    queue: shuffleRepeat(tickets, state.qCount),
+    history: [], currentQ: null,
+    hintAttempt: 0, answered: false,
+    score: 0, total: 0,
+    ticketTexts: {},   // cache: filename -> plain text
+  };
+
+  // For single-ticket mode show preview; for mixed skip to test
+  if (state.ticketMode === 'one' && tickets.length === 1) {
+    await showTicketPreview(tickets[0]);
+  } else {
+    // Pre-fetch all ticket texts in background for side panel
+    tickets.forEach(fn => fetchAndCacheTicket(fn));
+    launchTest();
+  }
+}
+
+async function fetchAndCacheTicket(filename) {
+  if (state.session.ticketTexts[filename]) return;
+  try {
+    const r = await fetch('/api/ticket_text?filename=' + encodeURIComponent(filename));
+    if (r.ok) {
+      const data = await r.json();
+      state.session.ticketTexts[filename] = data.text;
+    }
+  } catch(e) {}
+}
+
+async function showTicketPreview(filename) {
+  showScreen('screen-preview');
+  const previewBody = document.getElementById('preview-body');
+  previewBody.innerHTML = '<div class="spinner"></div>';
+  try {
+    await fetchAndCacheTicket(filename);
+    const text = state.session.ticketTexts[filename] || '';
+    const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
+    document.getElementById('preview-title').textContent = firstLine;
+    previewBody.innerHTML = ticketTextToHtml(text);
+    if (window.MathJax) MathJax.typesetPromise([previewBody]);
+  } catch(e) {
+    previewBody.innerHTML = '<p style="color:var(--red)">Не удалось загрузить билет</p>';
+  }
+}
+
+function proceedToTest() {
+  launchTest();
+}
+
+function launchTest() {
+  // Populate side panel with first ticket (will update per question)
+  showScreen('screen-question');
+  loadNextQuestion();
+}
+
+function toggleSidePanel(btn) {
+  btn.classList.toggle('open');
+  document.getElementById('side-panel-content').classList.toggle('open');
+}
+
+function updateSidePanel(filename) {
+  const content = document.getElementById('side-panel-content');
+  const text = state.session.ticketTexts[filename];
+  if (!text) {
+    content.innerHTML = '<p style="color:var(--muted);font-size:12px;">Загружаю...</p>';
+    fetchAndCacheTicket(filename).then(() => {
+      const t = state.session.ticketTexts[filename];
+      if (t) {
+        content.innerHTML = ticketTextToHtml(t);
+        if (window.MathJax) MathJax.typesetPromise([content]);
+      }
+    });
+    return;
+  }
+  content.innerHTML = ticketTextToHtml(text);
+  if (window.MathJax) MathJax.typesetPromise([content]);
+}
+
+function shuffleRepeat(arr, n) {
+  const result = [];
+  while (result.length < n) {
+    const shuffled = [...arr].sort(() => Math.random() - .5);
+    result.push(...shuffled);
+  }
+  return result.slice(0, n);
+}
+
+// ══ QUESTION ENGINE ════════════════════════════════════════════
+async function loadNextQuestion() {
+  const s = state.session;
+  const qNum = s.history.length;
+
+  if (qNum >= state.qCount) { await showSummary(); return; }
+
+  // Update progress UI
+  document.getElementById('q-progress').textContent = `Вопрос ${qNum + 1}/${state.qCount}`;
+  document.getElementById('session-score').textContent = s.score;
+  document.getElementById('session-total').textContent = s.total;
+  document.getElementById('progress-fill').style.width = (qNum / state.qCount * 100) + '%';
+  document.getElementById('hint-box').classList.remove('visible');
+  document.getElementById('action-row').style.display = 'none';
+
+  // Show loading
+  document.getElementById('question-card').innerHTML = `
+    <div class="spinner"></div>
+    <div class="loading-text">Генерирую вопрос...</div>
+  `;
+
+  const ticketFile = s.queue[qNum];
+  document.getElementById('session-ticket-label').textContent = ticketFile;
+  updateSidePanel(ticketFile);
+  // Pre-fetch next ticket
+  const nextFile = s.queue[qNum + 1];
+  if (nextFile) fetchAndCacheTicket(nextFile);
+
+  try {
+    const isLastQuestion = (qNum === state.qCount - 1);
+    const qType = isLastQuestion ? 'final_open' : state.qMode;
+    const q = await api('/api/generate_question', {
+      ticket_file: ticketFile,
+      question_type: qType,
+      history: s.history.slice(-8),
+    });
+    // Fix any bare LaTeX commands the model forgot to wrap in $
+    q.question = fixLatex(q.question);
+    if (q.reference_answer) q.reference_answer = fixLatex(q.reference_answer);
+    if (q.explanation) q.explanation = fixLatex(q.explanation);
+    if (q.hint) q.hint = fixLatex(q.hint);
+    if (q.options) q.options = q.options.map(fixLatex);
+    if (q.formulas) q.formulas = q.formulas.map(fixLatex);
+    if (q.labels) q.labels = q.labels.map(fixLatex);
+    q._ticket = ticketFile;
+    s.currentQ = q;
+    s.hintAttempt = 0;
+    s.answered = false;
+    renderQuestion(q);
+    document.getElementById('action-row').style.display = 'flex';
+    // Trigger MathJax
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+  } catch(e) {
+    document.getElementById('question-card').innerHTML = `<p style="color:var(--red);">Ошибка: ${e.message}</p>`;
+    document.getElementById('action-row').style.display = 'flex';
+    showToast('Ошибка генерации вопроса: ' + e.message);
+  }
+}
+
+// ── LaTeX auto-fix ────────────────────────────────────────────
+// If model forgot to wrap LaTeX in $...$ — wrap it automatically
+function fixLatex(text) {
+  if (!text) return text;
+
+  // Already has $$ blocks — leave those alone, only fix inline gaps
+  // Step 1: protect existing $$...$$ and $...$ by replacing with placeholders
+  const blocks = [];
+  let s = text.replace(/\$\$[\s\S]*?\$\$/g, m => { blocks.push(m); return `\x00B${blocks.length-1}\x00`; });
+  s = s.replace(/\$[^$\n]+?\$/g, m => { blocks.push(m); return `\x00B${blocks.length-1}\x00`; });
+
+  // Step 2: find bare LaTeX commands not inside $ and wrap them
+  // Patterns: \cmd, \cmd{...}, expressions with ^ _ \frac \int \sum \lim etc.
+  // We wrap runs of tokens that contain LaTeX commands
+  const LATEX_CMD = /(?:\\[a-zA-Z]+(?:\{[^}]*\}|\[[^\]]*\])*|[a-zA-Z0-9]*[\^_][{a-zA-Z0-9\\}]+)[^\s,\.;:!?()"\x00]*/g;
+
+  // Simpler targeted approach: wrap sequences that start with \ and look like math
+  s = s.replace(/(?<![=$\x00])\\(?:frac|sqrt|int|sum|prod|lim|log|ln|sin|cos|tan|infty|pm|cdot|times|div|leq|geq|neq|approx|equiv|Rightarrow|Leftarrow|rightarrow|leftarrow|leftrightarrow|neg|land|lor|forall|exists|in|notin|subset|cup|cap|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|Omega|partial|nabla|overline|hat|vec|bar|dot|ddot|left|right|binom|pmatrix|matrix|begin|end)(?:\{[^}]*\}|\[[^\]]*\])*[^$\x00\n]*/g,
+    m => `$${m.trim()}$`
+  );
+
+  // Step 3: restore placeholders
+  s = s.replace(/\x00B(\d+)\x00/g, (_, i) => blocks[parseInt(i)]);
+  return s;
+}
+
+function renderQuestion(q) {
+  const card = document.getElementById('question-card');
+  const types = { open:'Открытый', choice:'Выбор ответа', formula_choice:'Формулы', formula_match:'Сопоставление' };
+  const tClass = `q-type-${q.type}`;
+  let html = `<div class="q-type-badge ${tClass}">${types[q.type] || q.type}</div>
+               <div class="question-text">${q.question}</div>`;
+
+  if (q.type === 'open') {
+    html += `<textarea class="answer-textarea" id="open-answer" placeholder="Введите ваш ответ..."></textarea>`;
+    document.getElementById('btn-submit').style.display = 'inline-flex';
+    document.getElementById('btn-next').style.display = 'none';
+  } else if (q.type === 'choice' || q.type === 'formula_choice') {
+    html += `<div class="options-list">${
+      q.options.map((opt, i) =>
+        `<button class="option-btn" onclick="selectOption(this, ${i})" data-idx="${i}">${opt}</button>`
+      ).join('')
+    }</div>`;
+    document.getElementById('btn-submit').style.display = 'inline-flex';
+    document.getElementById('btn-next').style.display = 'none';
+  } else if (q.type === 'formula_match') {
+    html += renderMatchQuestion(q);
+    document.getElementById('btn-submit').style.display = 'inline-flex';
+    document.getElementById('btn-next').style.display = 'none';
+  }
+
+  card.innerHTML = html;
+}
+
+function renderMatchQuestion(q) {
+  const formulaCol = q.formulas.map((f, i) =>
+    `<div class="match-formula" onclick="selectMatchItem('formula', ${i}, this)" data-idx="${i}" id="mf-${i}">${f}</div>`
+  ).join('');
+  const labelCol = q.labels.map((l, i) =>
+    `<div class="match-label" onclick="selectMatchItem('label', ${i}, this)" data-idx="${i}" id="ml-${i}">${l}</div>`
+  ).join('');
+  return `
+    <div class="match-container">
+      <div class="match-col"><div class="match-col-title">Формулы</div>${formulaCol}</div>
+      <div class="match-col"><div class="match-col-title">Названия</div>${labelCol}</div>
+    </div>`;
+}
+
+// ── Match logic ──
+let matchState = { selectedFormula: null, selectedLabel: null, pairs: {} };
+
+function selectMatchItem(type, idx, el) {
+  if (state.session.answered) return;
+
+  if (type === 'formula') {
+    document.querySelectorAll('.match-formula').forEach(e => e.classList.remove('selected'));
+    if (matchState.selectedFormula === idx) { matchState.selectedFormula = null; return; }
+    matchState.selectedFormula = idx; el.classList.add('selected');
+  } else {
+    document.querySelectorAll('.match-label').forEach(e => e.classList.remove('selected'));
+    if (matchState.selectedLabel === idx) { matchState.selectedLabel = null; return; }
+    matchState.selectedLabel = idx; el.classList.add('selected');
+  }
+
+  if (matchState.selectedFormula !== null && matchState.selectedLabel !== null) {
+    matchState.pairs[matchState.selectedFormula] = matchState.selectedLabel;
+    document.getElementById(`mf-${matchState.selectedFormula}`).classList.add('matched');
+    document.getElementById(`ml-${matchState.selectedLabel}`).classList.add('matched');
+    document.getElementById(`mf-${matchState.selectedFormula}`).classList.remove('selected');
+    document.getElementById(`ml-${matchState.selectedLabel}`).classList.remove('selected');
+    matchState.selectedFormula = null; matchState.selectedLabel = null;
+  }
+}
+
+// ── Option select ──
+let selectedOptionIdx = null;
+function selectOption(el, idx) {
+  if (state.session.answered) return;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedOptionIdx = idx;
+}
+
+// ══ ANSWER SUBMISSION ═════════════════════════════════════════
+async function submitAnswer() {
+  const q = state.session.currentQ;
+  const s = state.session;
+  if (s.answered) return;
+
+  const btnSubmit = document.getElementById('btn-submit');
+  btnSubmit.disabled = true; btnSubmit.textContent = 'Проверяю...';
+
+  let result;
+
+  try {
+    if (q.type === 'open') {
+      const userAnswer = document.getElementById('open-answer').value.trim();
+      if (!userAnswer) { btnSubmit.disabled = false; btnSubmit.textContent = 'Проверить ответ'; showToast('Введите ответ'); return; }
+      result = await api('/api/check_answer', {
+        ticket_file: q._ticket,
+        question: q.question,
+        question_type: q.type,
+        reference_answer: q.reference_answer,
+        user_answer: userAnswer,
+      });
+      document.getElementById('open-answer').disabled = true;
+
+    } else if (q.type === 'choice' || q.type === 'formula_choice') {
+      if (selectedOptionIdx === null) { btnSubmit.disabled = false; btnSubmit.textContent = 'Проверить ответ'; showToast('Выберите вариант'); return; }
+      const isCorrect = selectedOptionIdx === q.correct_index;
+      result = { score: isCorrect ? 100 : 0, verdict: isCorrect ? 'correct' : 'wrong', feedback: q.explanation, missing: '' };
+      // Highlight options
+      document.querySelectorAll('.option-btn').forEach((b, i) => {
+        b.disabled = true;
+        if (i === q.correct_index) b.classList.add('correct');
+        else if (i === selectedOptionIdx && !isCorrect) b.classList.add('wrong');
+      });
+      selectedOptionIdx = null;
+
+    } else if (q.type === 'formula_match') {
+      const correct_order = q.correct_order;
+      let correctCount = 0;
+      q.formulas.forEach((_, fi) => {
+        const isCorrect = matchState.pairs[fi] === correct_order[fi];
+        document.getElementById(`mf-${fi}`).classList.remove('matched');
+        document.getElementById(`mf-${fi}`).classList.add(isCorrect ? 'correct' : 'wrong');
+        if (isCorrect) correctCount++;
+      });
+      const pct = Math.round(correctCount / q.formulas.length * 100);
+      result = { score: pct, verdict: pct === 100 ? 'correct' : pct >= 50 ? 'partial' : 'wrong', feedback: q.explanation, missing: '' };
+      matchState = { selectedFormula: null, selectedLabel: null, pairs: {} };
+    }
+
+    s.answered = true;
+    s.total++;
+    s.score += (result.verdict === 'correct' ? 1 : 0);
+
+    // Show feedback
+    const feedbackClass = result.verdict === 'correct' ? 'feedback-correct' : result.verdict === 'partial' ? 'feedback-partial' : 'feedback-wrong';
+    const verdictText = result.verdict === 'correct' ? '✓ Верно' : result.verdict === 'partial' ? '~ Частично верно' : '✗ Неверно';
+    const feedbackHtml = `
+      <div class="feedback-box ${feedbackClass}">
+        <div class="feedback-title">${verdictText}</div>
+        <div>${result.feedback || ''}</div>
+        ${result.missing ? `<div style="margin-top:8px;opacity:.7;">Упущено: ${result.missing}</div>` : ''}
+      </div>`;
+    document.getElementById('question-card').insertAdjacentHTML('beforeend', feedbackHtml);
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+
+    s.history.push({ type: q.type, question: q.question, score: result.score, verdict: result.verdict });
+
+    btnSubmit.style.display = 'none';
+    document.getElementById('btn-next').style.display = 'inline-flex';
+    document.getElementById('btn-hint').style.display = 'none';
+    document.getElementById('btn-dontknow').style.display = 'none';
+
+  } catch(e) {
+    showToast('Ошибка проверки: ' + e.message);
+    btnSubmit.disabled = false; btnSubmit.textContent = 'Проверить ответ';
+  }
+}
+
+async function dontKnow() {
+  const q = state.session.currentQ;
+  const s = state.session;
+  if (s.answered) return;
+  s.answered = true;
+  s.total++;
+  // score 0
+
+  // Build the "correct answer" text to show
+  let answerHtml = '';
+  if (q.type === 'open') {
+    answerHtml = q.reference_answer || '';
+    document.getElementById('open-answer').disabled = true;
+  } else if (q.type === 'choice' || q.type === 'formula_choice') {
+    document.querySelectorAll('.option-btn').forEach((b, i) => {
+      b.disabled = true;
+      if (i === q.correct_index) b.classList.add('correct');
+    });
+    answerHtml = q.explanation || q.options?.[q.correct_index] || '';
+  } else if (q.type === 'formula_match') {
+    const pairs = q.formulas.map((f, i) => `${f} → ${q.labels[q.correct_order[i]]}`).join('<br>');
+    answerHtml = pairs + (q.explanation ? '<br><br>' + q.explanation : '');
+  }
+
+  const feedbackHtml = `
+    <div class="feedback-box feedback-wrong">
+      <div class="feedback-title">🏳 Не знаю — показываю ответ</div>
+      <div>${answerHtml}</div>
+    </div>`;
+  document.getElementById('question-card').insertAdjacentHTML('beforeend', feedbackHtml);
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+
+  s.history.push({ type: q.type, question: q.question, score: 0, verdict: 'wrong' });
+
+  document.getElementById('btn-submit').style.display = 'none';
+  document.getElementById('btn-dontknow').style.display = 'none';
+  document.getElementById('btn-hint').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-flex';
+}
+
+function nextQuestion() {
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('btn-submit').style.display = 'none';
+  document.getElementById('btn-hint').style.display = 'inline-flex';
+  document.getElementById('btn-dontknow').style.display = 'inline-flex';
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('btn-submit').textContent = 'Проверить ответ';
+  document.getElementById('hint-box').classList.remove('visible');
+  loadNextQuestion();
+}
+
+// ══ HINTS ═════════════════════════════════════════════════════
+async function requestHint() {
+  const q = state.session.currentQ;
+  if (!q || state.session.answered) return;
+  state.session.hintAttempt++;
+  try {
+    const r = await api('/api/get_hint', {
+      ticket_file: q._ticket,
+      question: q.question,
+      hint: q.hint || '',
+      attempt: state.session.hintAttempt,
+    });
+    document.getElementById('hint-text').innerHTML = r.hint;
+    document.getElementById('hint-box').classList.add('visible');
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('hint-box')]);
+  } catch(e) {
+    showToast('Ошибка получения подсказки');
+  }
+}
+
+// ══ SUMMARY ═══════════════════════════════════════════════════
+async function showSummary() {
+  const s = state.session;
+  showScreen('screen-summary');
+
+  // Use first ticket from queue as reference
+  const ticketFile = state.session.queue[0];
+
+  document.getElementById('summary-score').textContent = '...';
+  document.getElementById('summary-grade').textContent = 'Анализирую...';
+  document.getElementById('summary-text').textContent = '';
+
+  try {
+    const r = await api('/api/summary', { ticket_file: ticketFile, history: s.history });
+    document.getElementById('summary-score').textContent = r.overall_score + '%';
+
+    const grade = r.grade || '';
+    const gradeEl = document.getElementById('summary-grade');
+    gradeEl.textContent = grade;
+    gradeEl.style.background = grade.includes('Отл') ? 'rgba(34,211,160,.15)' :
+                                grade.includes('Хор') ? 'rgba(79,142,247,.15)' :
+                                grade.includes('Удов') ? 'rgba(247,195,85,.15)' : 'rgba(247,85,85,.15)';
+    gradeEl.style.color = grade.includes('Отл') ? 'var(--green)' :
+                           grade.includes('Хор') ? 'var(--accent)' :
+                           grade.includes('Удов') ? 'var(--yellow)' : 'var(--red)';
+
+    document.getElementById('summary-text').textContent = r.summary_text || '';
+    document.getElementById('strong-areas').innerHTML = (r.strong_areas || []).map(a => `<div class="area-item">✓ ${a}</div>`).join('');
+    document.getElementById('weak-areas').innerHTML = (r.weak_areas || []).map(a => `<div class="area-item">⚠ ${a}</div>`).join('');
+    document.getElementById('recommendation').textContent = r.recommendation || '';
+  } catch(e) {
+    document.getElementById('summary-score').textContent = s.score + '/' + s.total;
+    document.getElementById('summary-grade').textContent = 'Ошибка анализа';
+    showToast('Ошибка получения итогов: ' + e.message);
+  }
+}
+
+// ══ MISC ══════════════════════════════════════════════════════
+function confirmExit() {
+  if (state.session.history.length > 0) {
+    if (!confirm('Прервать сессию? Прогресс будет потерян.')) return;
+  }
+  showScreen('screen-tickets');
+}
+
+// Init
+(function init() {
+  const saved = localStorage.getItem('mistral_key');
+  if (saved) {
+    state.apiKey = saved;
+    document.getElementById('api-key-input').value = saved;
+    document.getElementById('api-status').textContent = '✓ Ключ загружен из памяти';
+  }
+})();
+</script>
+</body>
+</html>
