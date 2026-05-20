@@ -9,8 +9,35 @@
 <script>
 window.MathJax = {
   tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
-  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] },
+  startup: {
+    ready() {
+      MathJax.startup.defaultReady();
+    }
+  },
+  svg: { fontCache: 'global' }
 };
+// After MathJax loads, patch error rendering to show raw LaTeX instead of red box
+window.addEventListener('load', () => {
+  if (window.MathJax && MathJax.startup) {
+    MathJax.startup.promise.then(() => {
+      const orig = MathJax.typesetPromise.bind(MathJax);
+      window.safeTypeset = async (els) => {
+        try { await orig(els); } catch(e) { console.warn('MathJax error:', e); }
+        // Replace any remaining error nodes with styled raw text
+        (els || [document.body]).forEach(el => {
+          el && el.querySelectorAll && el.querySelectorAll('mjx-merror, .MathJax_Error').forEach(err => {
+            const raw = err.closest('[data-latex]')?.getAttribute('data-latex') || err.textContent;
+            const span = document.createElement('code');
+            span.style.cssText = 'background:#2a1a00;color:#ffa500;padding:2px 6px;border-radius:4px;font-size:13px;';
+            span.textContent = raw || '?';
+            err.closest('mjx-math, .MathJax')?.replaceWith(span) || err.replaceWith(span);
+          });
+        });
+      };
+    });
+  }
+});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 
@@ -935,7 +962,7 @@ async function showTicketPreview(filename) {
     const firstLine = text.split('\n')[0].replace(/^#+\s*/, '').trim();
     document.getElementById('preview-title').textContent = firstLine;
     previewBody.innerHTML = ticketTextToHtml(text);
-    if (window.MathJax) MathJax.typesetPromise([previewBody]);
+    if (window.safeTypeset) safeTypeset([previewBody]); else if (window.MathJax) MathJax.typesetPromise([previewBody]);
   } catch(e) {
     previewBody.innerHTML = '<p style="color:var(--red)">Не удалось загрузить билет</p>';
   }
@@ -965,13 +992,13 @@ function updateSidePanel(filename) {
       const t = state.session.ticketTexts[filename];
       if (t) {
         content.innerHTML = ticketTextToHtml(t);
-        if (window.MathJax) MathJax.typesetPromise([content]);
+        if (window.safeTypeset) safeTypeset([content]); else if (window.MathJax) MathJax.typesetPromise([content]);
       }
     });
     return;
   }
   content.innerHTML = ticketTextToHtml(text);
-  if (window.MathJax) MathJax.typesetPromise([content]);
+  if (window.safeTypeset) safeTypeset([content]); else if (window.MathJax) MathJax.typesetPromise([content]);
 }
 
 function shuffleRepeat(arr, n) {
@@ -1034,7 +1061,7 @@ async function loadNextQuestion() {
     renderQuestion(q);
     document.getElementById('action-row').style.display = 'flex';
     // Trigger MathJax
-    if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+    if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
   } catch(e) {
     document.getElementById('question-card').innerHTML = `<p style="color:var(--red);">Ошибка: ${e.message}</p>`;
     document.getElementById('action-row').style.display = 'flex';
@@ -1069,12 +1096,21 @@ function fixLatex(text) {
   return s;
 }
 
+// Render inline markdown: **bold**, *italic*, `code`
+function markdownInline(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code style="background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:.9em;">$1</code>');
+}
+
 function renderQuestion(q) {
   const card = document.getElementById('question-card');
   const types = { open:'Открытый', choice:'Выбор ответа', formula_choice:'Формулы', formula_match:'Сопоставление' };
   const tClass = `q-type-${q.type}`;
   let html = `<div class="q-type-badge ${tClass}">${types[q.type] || q.type}</div>
-               <div class="question-text">${q.question}</div>`;
+               <div class="question-text">${markdownInline(q.question)}</div>`;
 
   if (q.type === 'open') {
     html += `<textarea class="answer-textarea" id="open-answer" placeholder="Введите ваш ответ..."></textarea>`;
@@ -1083,7 +1119,7 @@ function renderQuestion(q) {
   } else if (q.type === 'choice' || q.type === 'formula_choice') {
     html += `<div class="options-list">${
       q.options.map((opt, i) =>
-        `<button class="option-btn" onclick="selectOption(this, ${i})" data-idx="${i}">${opt}</button>`
+        `<button class="option-btn" onclick="selectOption(this, ${i})" data-idx="${i}">${markdownInline(opt)}</button>`
       ).join('')
     }</div>`;
     document.getElementById('btn-submit').style.display = 'inline-flex';
@@ -1210,7 +1246,7 @@ async function submitAnswer() {
         ${result.missing ? `<div style="margin-top:8px;opacity:.7;">Упущено: ${result.missing}</div>` : ''}
       </div>`;
     document.getElementById('question-card').insertAdjacentHTML('beforeend', feedbackHtml);
-    if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+    if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
 
     s.history.push({ type: q.type, question: q.question, score: result.score, verdict: result.verdict });
 
@@ -1255,7 +1291,7 @@ async function dontKnow() {
       <div>${answerHtml}</div>
     </div>`;
   document.getElementById('question-card').insertAdjacentHTML('beforeend', feedbackHtml);
-  if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
+  if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.safeTypeset) safeTypeset([document.getElementById('question-card')]); else if (window.MathJax) MathJax.typesetPromise([document.getElementById('question-card')]);
 
   s.history.push({ type: q.type, question: q.question, score: 0, verdict: 'wrong' });
 
@@ -1290,7 +1326,7 @@ async function requestHint() {
     });
     document.getElementById('hint-text').innerHTML = r.hint;
     document.getElementById('hint-box').classList.add('visible');
-    if (window.MathJax) MathJax.typesetPromise([document.getElementById('hint-box')]);
+    if (window.safeTypeset) safeTypeset([document.getElementById('hint-box')]); else if (window.MathJax) MathJax.typesetPromise([document.getElementById('hint-box')]);
   } catch(e) {
     showToast('Ошибка получения подсказки');
   }
